@@ -1,11 +1,13 @@
 package hellojpa;
 
 import hellojpa.domain.Member;
+import hellojpa.enums.RoleType;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.awt.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -52,21 +54,53 @@ public class JpaMain {
 
             //영속 - persistenceContext에서 관리(엔티티를 영구 저장한다는 뜻)
             System.out.println(" ==== BEFORE ====");
-            em.persist(member); //1차 캐시에 저장
+            em.persist(member); //1차 캐시에 저장 - 1차 캐시가 영속성 컨테스트라고 보면 됨
             System.out.println(" ==== AFTER ===="); //실제로 BEFOR, AFTER이 모두 돈 다음 쿼리실행.
                                                     //영속 상태(PersistenceContext에서 관리되어지는 상태)가 된다고 바로 DB에 날라가는게 아니라 commit 직전에 날라감
             */
 
+            /*
             //영속
             Member member1 = new Member(150L, "A");
             Member member2 = new Member(151L, "B");
 
             em.persist(member1);
             em.persist(member2);
+            */
+
+            /*
+            //flush 사용
+            Member member = new Member(200L, "member200");
+            em.persist(member);
+
+            em.flush(); //flush를 사용하면 데이터베이스에 바로 값이 저장된다.
+                        //JPQL 쿼리 실행시 비영속 상태일때 쿼리가 조회되지 않으므로 JPQL 쿼리문이 실행 되기 전 무조건 flush를 날림
+
+            */
+
+            /*
+            //준영속 상태
+            Member member = em.find(Member.class, 150L); //find만 해줘도 db에 조회에 봤을때 1차 캐시가 없으면 1차 캐시에 저장해 영속상태가 됨
+            member.setName("AAAAA");
+
+            em.detach(member); //위에 값을 변경했는데도 detach를 사용해 영속상태인걸, 준영속 상태로 만들어 jpa에서 관리하지 않도록 만들어 update query가 날라가지 않음
+            //em.clear(); 영속성 컨테스트를 완전히 초기화로 만들어 준영속 상태로 만듬
 
             System.out.println("===============================");
 
+
+             */
+
+            Member member = new Member();
+            member.setId(3L);
+            member.setUsername("C");
+            member.setRoleType(RoleType.USER); //EnumType.ORDINAL을 사용할 경우 db에 column을 추가할때 기존 데이터의 Enum값이 존재하므로 중복된 값이
+                                               //저장될 수 있으므로 EnumType.STRING으로 사용하여 명시적으로 볼 수 있게 해주는게 좋다.
+
+            em.persist(member);
+
             tx.commit();
+
 
         } catch ( Exception e) {
             tx.rollback();
